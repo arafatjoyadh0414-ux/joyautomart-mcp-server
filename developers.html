@@ -1,0 +1,88 @@
+<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JOY Automart MCP Server · Developers</title>
+<meta name="description" content="Connect AI agents to JOY Automart's parts catalogue and vehicle listings using the Model Context Protocol.">
+<style>
+:root{--bg:#0b1020;--card:#131a2e;--fg:#e8ecf5;--mut:#9aa6c0;--acc:#f5a524;--bd:#24304d}
+*{box-sizing:border-box}body{margin:0;font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--fg)}
+header{padding:56px 24px 32px;text-align:center;background:linear-gradient(180deg,#1a2342,var(--bg))}
+h1{margin:0 0 8px;font-size:2.2rem}h1 span{color:var(--acc)}header p{color:var(--mut);max-width:680px;margin:0 auto}
+main{max-width:960px;margin:0 auto;padding:0 24px 64px}section{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:24px 28px;margin:24px 0}
+h2{margin-top:0;color:var(--acc)}h3{margin:24px 0 6px}code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.88em;background:#0a0f1d;padding:2px 6px;border-radius:5px}
+pre{background:#0a0f1d;border:1px solid var(--bd);border-radius:10px;padding:14px 16px;overflow:auto}pre code{padding:0;background:none}
+.ep{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:20px;flex-wrap:wrap}.ep code{font-size:1.05rem;padding:10px 14px}
+button{background:var(--acc);border:0;border-radius:8px;padding:10px 14px;font-weight:600;cursor:pointer}
+table{width:100%;border-collapse:collapse;font-size:.93rem}td,th{text-align:left;padding:10px 8px;border-bottom:1px solid var(--bd);vertical-align:top}th{color:var(--mut)}
+.warn{border-left:4px solid var(--acc);background:#22190a;padding:14px 18px;border-radius:8px}a{color:var(--acc)}dl dt{font-weight:600}dl dd{margin:0 0 10px;color:var(--mut)}
+footer{text-align:center;color:var(--mut);font-size:.85rem;padding:24px}
+</style></head><body>
+<header><h1>JOY Automart <span>MCP Server</span></h1>
+<p>Give AI assistants and agents live access to JOY Automart's automotive parts catalogue and JOY Auto Exchange vehicle listings in Bangladesh, with prices in BDT, stock, chassis fitment, comparisons and auctions.</p>
+<div class="ep"><code id="ep">https://www.joyautomart.com/mcp</code><button onclick="navigator.clipboard.writeText(document.getElementById('ep').textContent);this.textContent='Copied'">Copy</button></div></header>
+<main>
+<section><h2>Endpoint</h2><dl>
+<dt>URL</dt><dd><code>https://www.joyautomart.com/mcp</code></dd>
+<dt>Transport</dt><dd>Streamable HTTP (JSON-RPC 2.0 over POST). This is not the legacy SSE transport. Use <code>"type": "http"</code> / <code>streamable-http</code> in your client.</dd>
+<dt>Protocol version</dt><dd><code>2025-03-26</code></dd>
+<dt>Server</dt><dd><code>joy-automart</code> v1.2.0</dd>
+<dt>Authentication</dt><dd>None needed for the public, read-only tools. A buyer token is optional (see below).</dd></dl>
+<h3>Quick test</h3><pre><code>curl -s -X POST https://www.joyautomart.com/mcp \\
+  -H &#x27;Content-Type: application/json&#x27; \\
+  -H &#x27;Accept: application/json, text/event-stream&#x27; \\
+  -d &#x27;{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:1,&quot;method&quot;:&quot;tools/list&quot;}&#x27;</code></pre></section>
+<section><h2>Connect your client</h2><h3>Claude Desktop</h3><p>Settings → Connectors → Add custom connector, and paste the URL. Or, for the stdio config in <code>claude_desktop_config.json</code>:</p><pre><code>{
+  &quot;mcpServers&quot;: {
+    &quot;joy-automart&quot;: {
+      &quot;command&quot;: &quot;npx&quot;,
+      &quot;args&quot;: [&quot;-y&quot;, &quot;@joyautomart/mcp-server&quot;],
+      &quot;env&quot;: { &quot;JOY_AGENT_TOKEN&quot;: &quot;joyagt_optional&quot; }
+    }
+  }
+}</code></pre><h3>Claude Code</h3><pre><code>claude mcp add --transport http joy-automart https://www.joyautomart.com/mcp</code></pre><h3>Cursor</h3><p><code>~/.cursor/mcp.json</code> or <code>.cursor/mcp.json</code>:</p><pre><code>{
+  &quot;mcpServers&quot;: {
+    &quot;joy-automart&quot;: {
+      &quot;url&quot;: &quot;https://www.joyautomart.com/mcp&quot;,
+      &quot;headers&quot;: { &quot;Authorization&quot;: &quot;Bearer joyagt_optional&quot; }
+    }
+  }
+}</code></pre><h3>VS Code (GitHub Copilot)</h3><p><code>.vscode/mcp.json</code>:</p><pre><code>{
+  &quot;servers&quot;: {
+    &quot;joy-automart&quot;: {
+      &quot;type&quot;: &quot;http&quot;,
+      &quot;url&quot;: &quot;https://www.joyautomart.com/mcp&quot;
+    }
+  }
+}</code></pre><h3>Gemini CLI</h3><p><code>~/.gemini/settings.json</code>:</p><pre><code>{
+  &quot;mcpServers&quot;: {
+    &quot;joy-automart&quot;: {
+      &quot;httpUrl&quot;: &quot;https://www.joyautomart.com/mcp&quot;
+    }
+  }
+}</code></pre><h3>Vertex AI Agent Builder (ADK, Python)</h3><p>In Google's Agent Development Kit, attach the server as an MCP toolset, then deploy the agent to Vertex AI Agent Engine:</p><pre><code>from google.adk.agents import Agent
+from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset, StreamableHTTPConnectionParams
+
+agent = Agent(
+    model=&quot;gemini-2.5-flash&quot;,
+    name=&quot;joy_automart_assistant&quot;,
+    instruction=&quot;Help buyers find car parts and vehicles from JOY Automart.&quot;,
+    tools=[MCPToolset(connection_params=StreamableHTTPConnectionParams(url=&quot;https://www.joyautomart.com/mcp&quot;))],
+)</code></pre><h3>OpenAI Responses API</h3><pre><code>from openai import OpenAI
+client = OpenAI()
+resp = client.responses.create(
+    model=&quot;gpt-4.1&quot;,
+    tools=[{
+        &quot;type&quot;: &quot;mcp&quot;,
+        &quot;server_label&quot;: &quot;joy_automart&quot;,
+        &quot;server_url&quot;: &quot;https://www.joyautomart.com/mcp&quot;,
+        &quot;require_approval&quot;: &quot;never&quot;,
+    }],
+    input=&quot;Find front brake pads for a Toyota Axio NZE161 under 5000 BDT&quot;,
+)
+print(resp.output_text)</code></pre><h3>Any other client (stdio only)</h3><pre><code>npx -y @joyautomart/mcp-server --url https://www.joyautomart.com/mcp</code></pre></section>
+<section><h2>Tools</h2><table><thead><tr><th>Tool</th><th>What it does</th><th>Arguments</th></tr></thead><tbody><tr><td><code>search_parts</code></td><td>Search JOY Automart&#x27;s automotive parts catalogue in Bangladesh. Accepts English, Bangla (e.g. &#x27;টয়োটা এক্সিও ব্রেক প্যাড&#x27;) or Banglish. Returns retail prices in BDT, availability and a product URL. Results are fitment candidates, not guarantees.</td><td><code>query</code>, <code>make</code>, <code>chassis</code>, <code>category</code>, <code>in_stock_only</code>, <code>max_price_bdt</code>, <code>page</code>, <code>page_size</code></td></tr><tr><td><code>get_part</code></td><td>Full public detail for one catalogue part: BDT price, stock, minimum order, verified offers and bulk price breaks.</td><td><code>part_id</code></td></tr><tr><td><code>search_vehicles</code></td><td>Search JOY Auto Exchange vehicle listings in Bangladesh by make, model, year, fuel and BDT price. Only stated listing facts are returned.</td><td><code>query</code>, <code>make</code>, <code>fuel_type</code>, <code>verified_only</code>, <code>min_year</code>, <code>max_year</code>, <code>min_price_bdt</code>, <code>max_price_bdt</code>, <code>sort</code>, <code>page</code>, <code>page_size</code></td></tr><tr><td><code>get_vehicle</code></td><td>Full public detail for one JOY Auto Exchange listing (by listing id or slug): BDT price, specs, photos and, when the car passed JOY&#x27;s human QC, a summary of the inspection. Only stated listing facts are returned; seller contact details and reserves are never exposed.</td><td><code>vehicle_id</code></td></tr><tr><td><code>get_auction_status</code></td><td>Public status of one live or recent JOY auction: current bid in BDT, bid count, end time and anti-snipe extensions. Observation only: bidding needs a verified dealer account and a human. The seller&#x27;s reserve and bidder identities are never shown. Returns an error while live auctions are not open.</td><td><code>auction_id</code></td></tr><tr><td><code>compare_vehicles</code></td><td>Side-by-side comparison of 2 to 4 listings (ids or slugs from search_vehicles): price, year, mileage, fuel, verification and inspection grade. Listings that cannot be found are reported, not hidden.</td><td><code>vehicle_ids</code></td></tr><tr><td><code>get_buying_guide</code></td><td>How to buy from JOY Automart: currency (BDT), payment methods (card, bKash/Nagad/Rocket, cash on delivery), Dhaka and nationwide delivery zones and fees, human contact, and how an authenticated agent can place orders.</td><td>—</td></tr><tr><td><code>prepare_buyer_handoff</code></td><td>Compose the links a human buyer uses to complete a purchase: the product page and a pre-filled WhatsApp message to JOY&#x27;s sales team. Creates nothing and charges nothing.</td><td><code>part_id</code>, <code>quantity</code>, <code>vehicle</code>, <code>note</code></td></tr></tbody></table></section>
+<section><h2>Authentication &amp; buyer tokens</h2>
+<p>All the tools above work anonymously. To act on behalf of a signed-in JOY buyer, create a personal agent token at <a href="https://www.joyautomart.com/cars/account?section=ai-agents&amp;portal=retail">My account → AI agents</a>. Tokens start with <code>joyagt_</code>.</p>
+<p>Send the token as an HTTP header: <code>Authorization: Bearer joyagt_…</code>. If you use the npm proxy, set <code>JOY_AGENT_TOKEN</code> instead. Treat tokens like passwords: never paste them into shared configs or public repositories. You can revoke a token at any time on the same page.</p>
+<p>The server never takes payments. <code>prepare_buyer_handoff</code> returns a product link and a pre-filled WhatsApp message, so a human buyer always completes the purchase.</p></section>
+<section><h2>Fitment caveat</h2><div class="warn"><strong>Fitment results are guidance, not a guarantee.</strong> Compatibility comes from catalogue data such as chassis codes and OEM numbers. Model years, grades and the Japanese-import variants common in Bangladesh can differ. Agents should tell users to confirm the chassis code (for example NZE161) or the OEM part number with JOY's sales team before they buy. Vehicle details are only those stated in the listing, plus JOY's human QC summary where one exists.</div></section>
+<section><h2>Listings &amp; support</h2><p>Also available through the official MCP Registry (<code>com.joyautomart/mcp</code>), Smithery, mcp.so and Glama. Questions or integration help: <a href="https://www.joyautomart.com">joyautomart.com</a>.</p></section>
+</main><footer>© JOY Automart · Model Context Protocol integration</footer></body></html>
