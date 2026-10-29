@@ -1,3 +1,11 @@
+# Moved
+
+This repository has moved to **[www-joyautomart-com/mcp-server](https://github.com/www-joyautomart-com/mcp-server)**, the official JOY Automart MCP server.
+
+Official MCP Registry name: `com.joyautomart/mcp`. Remote endpoint: https://www.joyautomart.com/mcp
+
+---
+
 # JOY Automart MCP Server
 
 [![npm](https://img.shields.io/npm/v/@joyautomart/mcp-server)](https://www.npmjs.com/package/@joyautomart/mcp-server) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
